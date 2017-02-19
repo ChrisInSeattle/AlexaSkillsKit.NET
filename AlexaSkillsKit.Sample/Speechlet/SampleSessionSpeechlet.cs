@@ -81,23 +81,20 @@ namespace Sample.Controllers
          */
         private SpeechletResponse SetNameInSessionAndSayHello(Intent intent, Session session) {
             // Get the slots from the intent.
-            Dictionary<string, Slot> slots = intent.Slots;
+            Slot nameSlot;
+            string speechOutput;
 
-            // Get the name slot from the list slots.
-            Slot nameSlot = slots[NAME_SLOT];
-            string speechOutput = "";
-
-            // Check for name and create output to user.
-            if (nameSlot != null) {
+            if (intent.Slots == null || !intent.Slots.TryGetValue(NAME_SLOT, out nameSlot))
+            {
+                speechOutput = "I'm not sure what your name is, please try again";
+            }
+            else
+            {
                 // Store the user's name in the Session and create response.
                 string name = nameSlot.Value;
                 session.Attributes[NAME_KEY] = name;
                 speechOutput = String.Format(
                     "Hello {0}, now I can remember your name, you can ask me your name by saying, whats my name?", name);
-            } 
-            else {
-                // Render an error since we don't know what the users name is.
-                speechOutput = "I'm not sure what your name is, please try again";
             }
 
             // Here we are setting shouldEndSession to false to not end the session and
@@ -116,18 +113,21 @@ namespace Sample.Controllers
         private SpeechletResponse GetNameFromSessionAndSayHello(Intent intent, Session session) {
             string speechOutput = "";
             bool shouldEndSession = false;
+            string nameAttribute;
 
             // Get the user's name from the session.
             string name = (String)session.Attributes[NAME_KEY];
 
             // Check to make sure user's name is set in the session.
-            if (!String.IsNullOrEmpty(name)) {
-                speechOutput = String.Format("Your name is {0}, goodbye", name);
-                shouldEndSession = true;
-            } 
-            else {
+            if (session.Attributes == null || session.Attributes.TryGetValue(NAME_KEY, out nameAttribute))
+            {
                 // Since the user's name is not set render an error message.
                 speechOutput = "I'm not sure what your name is, you can say, my name is Sam";
+            }
+            else
+            {
+                speechOutput = String.Format("Your name is {0}, goodbye", name);
+                shouldEndSession = true;
             }
 
             return BuildSpeechletResponse(intent.Name, speechOutput, shouldEndSession);
